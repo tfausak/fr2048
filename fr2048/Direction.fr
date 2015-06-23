@@ -1,0 +1,21 @@
+module fr2048.Direction where
+
+data Direction
+    = West
+    | South
+    | East
+    | North
+
+derive Bounded Direction
+derive Enum Direction
+derive Eq Direction
+derive Show Direction
+
+directions :: [Direction]
+directions = [minBound ..]
+
+render :: Direction -> String
+render West = "\u2190"
+render South = "\u2193"
+render East = "\u2192"
+render North = "\u2191"

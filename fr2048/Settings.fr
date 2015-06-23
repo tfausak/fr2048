@@ -1,0 +1,13 @@
+module fr2048.Settings where
+
+height :: Int
+height = 4
+
+maxTile :: Int
+maxTile = 2048
+
+tiles :: Int
+tiles = 2
+
+width :: Int
+width = 4

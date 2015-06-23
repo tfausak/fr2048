@@ -1,0 +1,60 @@
+module fr2048.Main where
+
+import fr2048.AI (bestMove)
+import fr2048.Board as B (Board)
+import fr2048.Direction as D (Direction)
+import fr2048.Game as G
+import fr2048.Renderer (renderGame)
+import fr2048.Tile as T (Tile)
+
+import Data.List (maximumBy)
+import System.Random as R (RandomGen)
+
+main :: [String] -> IO ()
+main _ = do
+    g <- R.getStdGen
+    play (G.new g)
+
+direction :: String -> Maybe Direction
+direction "\u001b[D" = Just D.West
+direction "\u001b[B" = Just D.South
+direction "\u001b[C" = Just D.East
+direction "\u001b[A" = Just D.North
+direction _ = Nothing
+
+getChars :: IO (Maybe String)
+getChars = do
+    a <- getChar
+    if a /= '\u001b' then return Nothing else do
+        b <- getChar
+        if b /= '[' then return Nothing else do
+            c <- getChar
+            return $ if c `elem` unpacked "ABCD"
+                then Just (packed [a, b, c])
+                else Nothing
+
+getMove :: IO (Maybe Direction)
+getMove = fmap (maybe Nothing direction) getChars
+
+plai :: RandomGen r => (Board, r) -> (Tile, Int)
+plai (b, r) = if G.isOver b
+    then (maxTile, B.score b)
+    else plai (G.addRandomTile (B.move b (bestMove b)) r)
+  where
+    maxTile = maximumBy (comparing T.score) (concat b)
+
+play :: RandomGen r => (Board, r) -> IO ()
+play (b, r) = do
+    -- hSetBuffering stdin NoBuffering
+    -- hSetEcho stdin False
+
+    putStrLn (renderGame b)
+
+    if G.hasWon b then putStrLn "You won!" else do
+        if G.isOver b then putStrLn "You lost." else do
+            m <- getMove
+            case m of
+                Nothing -> putStrLn "Unknown move." >> play (b, r)
+                Just d -> if B.canMove b d
+                    then putStrLn (D.render d) >> play (G.addRandomTile (B.move b d) r)
+                    else putStrLn "Invalid move." >> play (b, r)

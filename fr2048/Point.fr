@@ -1,0 +1,9 @@
+module fr2048.Point where
+
+type Point = (Int, Int)
+
+x :: Point -> Int
+x = fst
+
+y :: Point -> Int
+y = snd

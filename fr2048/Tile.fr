@@ -1,0 +1,14 @@
+module fr2048.Tile where
+
+type Tile = Maybe Int
+
+empty :: Tile
+empty = Nothing
+
+render :: Tile -> String
+render Nothing = "-"
+render (Just n) = show n
+
+score :: Tile -> Int
+score Nothing = 0
+score (Just n) = n

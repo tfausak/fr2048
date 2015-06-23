@@ -1,0 +1,47 @@
+module fr2048.AI where
+
+import fr2048.Board as B (Board)
+import fr2048.Direction as D (Direction)
+import fr2048.Vector (Vector)
+
+import Data.List (genericLength, maximumBy)
+
+bestMove :: Board -> Direction
+bestMove b = fst (maximumBy go bs)
+  where
+    go = comparing ((average :: [Int] -> Float) . fmap quality . boards . snd)
+    bs = reverse (moves b)
+
+boards :: Board -> [Board]
+boards b = ps >>= go
+  where
+    ps = B.emptyPoints b
+    go p = [B.set b t p | t <- [Just 2, Just 4]]
+
+moves :: Board -> [(Direction, Board)]
+moves b = fmap go ds
+  where
+    go d = (d, B.move b d)
+    ds = filter (B.canMove b) D.directions
+
+quality :: Board -> Int
+quality b = sum
+    [ 0
+    , 1 * B.score b
+    , 1 * length (moves b)
+    , 1 * length (B.emptyPoints b)
+    , -1 * roughness b
+    ]
+
+roughness :: Board -> Int
+roughness b = boardRoughness b + boardRoughness (B.rotate b)
+
+private average xs = fromIntegral (sum xs) / genericLength xs
+
+private boardRoughness :: Board -> Int
+private boardRoughness = sum . fmap vectorRoughness
+
+private vectorRoughness :: Vector -> Int
+private vectorRoughness v = length (filter id (zipWith (/=) ts (tail ts)))
+  where
+    ts = catMaybes v

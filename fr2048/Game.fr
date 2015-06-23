@@ -1,0 +1,62 @@
+module fr2048.Game where
+
+import fr2048.Board as B (Board)
+import fr2048.Direction as D ()
+import fr2048.Point (Point)
+import fr2048.Settings as S ()
+import fr2048.Tile (Tile)
+import fr2048.Vector as V (Vector)
+
+import System.Random as R (RandomGen)
+
+-- import Data.Maybe (fromJust)
+fromJust :: Maybe a -> a
+fromJust (Just x) = x
+fromJust Nothing = undefined
+
+addRandomTile :: RandomGen r => Board -> r -> (Board, r)
+addRandomTile b r = case p of
+    Nothing -> (b, r)
+    _ -> (b', r'')
+  where
+    b' = B.set b t (fromJust p)
+    (p, r') = randomEmptyPoint b r
+    (t, r'') = randomTile r'
+
+addRandomTiles :: RandomGen r => Int -> Board -> r -> (Board, r)
+addRandomTiles 0 b r = (b, r)
+addRandomTiles n b r = addRandomTiles (n - 1) b' r'
+  where
+    (b', r') = addRandomTile b r
+
+hasWon :: Board -> Bool
+hasWon = any (any (maybe false (>= S.maxTile)))
+
+isOver :: Board -> Bool
+isOver b = cantMove && haveNoEmptyPoints
+  where
+    cantMove = not (any (B.canMove b) D.directions)
+    haveNoEmptyPoints = null (B.emptyPoints b)
+
+new :: RandomGen r => r -> (Board, r)
+new = addRandomTiles S.tiles (B.empty S.width S.height)
+
+randomEmptyIndex :: RandomGen r => Vector -> r -> (Maybe Int, r)
+randomEmptyIndex v r = if null is then (Nothing, r) else (Just i, r')
+  where
+    i = is !! x
+    (x, r') = R.randomR (0, length is - 1) r
+    is = V.emptyIndexes v
+
+randomEmptyPoint :: RandomGen r => Board -> r -> (Maybe Point, r)
+randomEmptyPoint b r = if null ps then (Nothing, r) else (Just p, r')
+  where
+    p = ps !! x
+    (x, r') = R.randomR (0, length ps - 1) r
+    ps = B.emptyPoints b
+
+randomTile :: RandomGen r => r -> (Tile, r)
+randomTile r = (Just n, r')
+  where
+    n = if (x :: Float) < 0.9 then 2 else 4
+    (x, r') = R.random r

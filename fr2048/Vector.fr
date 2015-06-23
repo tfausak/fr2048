@@ -1,0 +1,35 @@
+module fr2048.Vector where
+
+import fr2048.Tile as T (Tile)
+
+import Data.List (group)
+
+type Vector = [Tile]
+
+canShift :: Vector -> Bool
+canShift v = shift v /= v
+
+empty :: Int -> Vector
+empty = flip replicate T.empty
+
+emptyIndexes :: Vector -> [Int]
+emptyIndexes = fmap fst . filter (isNothing . snd) . zip [0 ..]
+
+render :: Vector -> String
+render = unwords . fmap T.render
+
+score :: Vector -> Int
+score = sum . fmap T.score
+
+set :: Vector -> T.Tile -> Int -> Vector
+set v t i = zipWith go [0 ..] v
+  where
+    go i' t' = if i' == i then t else t'
+
+shift :: Vector -> Vector
+shift v = take n (v' ++ empty n)
+  where
+    n = length v
+    v' = group (filter isJust v) >>= go
+    go (Just a : Just b : ts) = Just (a + b) : go ts
+    go ts = ts
